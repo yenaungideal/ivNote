@@ -1,0 +1,116 @@
+  
+------Execute Query Selecting------------
+var data = ls.ExecuteQuery<StaffEntrys>("SELECT DISTINCT StaffEntry.StaffCode, StaffEntry.StaffName, StaffEntry.CreatedDate, StaffEntry.UpdatedDate, StaffEntry.SalaryRateID, SalaryRate.Description  AS SalaryRates,SalaryRate.ID FROM StaffEntry inner join SalaryRate ON StaffEntry.SalaryRateID = SalaryRate.ID");
+            gvData.DataSource = data;
+            gvData.DataBind();
+------------------------------------------Select-----------------------------------------------------------
+ var data = (from StaffEntry in ls.StaffEntrys join SalaryRate in ls.SalaryRates on StaffEntry.SalaryRateID equals SalaryRate.ID
+               select new { StaffEntry.StaffCode, StaffEntry.StaffName, StaffEntry.CreatedDate, StaffEntry.UpdatedDate, StaffEntry.SalaryRateID, SalaryRates = SalaryRate.Description }).Distinct();
+
+
+----------------------------------------Delete----------------------------------------------------------
+  protected void gvData_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "Edit")
+            {
+                string s = e.CommandArgument.ToString();
+                Response.Redirect("./Detail.aspx?ID=" + s);
+
+            }
+            else if (e.CommandName == "Delete")
+            {
+                string s = e.CommandArgument.ToString();
+                LinkToSQLDataContext ls = new LinkToSQLDataContext();
+                StaffEntrys staffEntrys = ls.StaffEntrys.First(SalaryRates => SalaryRates.ID == s);
+                ls.StaffEntrys.DeleteOnSubmit(staffEntrys);
+                ls.SubmitChanges();
+                LinqDataSource1();
+            }            
+        }
+
+----------------------------------------Query String--------------------------------------
+  public string ID
+        {
+            get
+            {
+                return Request.QueryString["ID"];
+            }
+            set
+            {
+                ID = value;
+            }
+        }
+----------------------------------Save & Update------------------------------------------
+  protected void butSave_Click(object sender, EventArgs e)
+        {
+            LinkToSQLDataContext ls = new LinkToSQLDataContext();
+
+            if (butSave.Text == "Save")
+            {
+                var StaffEntry= new StaffEntrys()
+                {
+                    ID = Guid.NewGuid().ToString(),
+                    StaffCode = txtCode.Text.ToString(),
+                    StaffName = txtDescription.Text.ToString(),
+                    SalaryRateID=ddlSalaryRate.SelectedValue,
+                    CreatedDate = DateTime.ParseExact(txtCreatedDate.Text, "dd/MM/yyyy", null),
+                    UpdatedDate = DateTime.ParseExact(txtUpdatedDate.Text, "dd/MM/yyyy", null)
+                };
+                ls.StaffEntrys.InsertOnSubmit(StaffEntry);
+                ls.SubmitChanges();
+                Response.Redirect("./Default.aspx");
+            }
+            else
+            {
+                StaffEntrys staffEntrys = ls.StaffEntrys.First(StaffEntrys => StaffEntrys.ID == ID);
+                staffEntrys.StaffCode = txtCode.Text;
+                staffEntrys.StaffName = txtDescription.Text;
+                staffEntrys.SalaryRateID = ddlSalaryRate.SelectedValue;
+                staffEntrys.CreatedDate = DateTime.ParseExact(txtCreatedDate.Text, "dd/MM/yyyy", null);
+                staffEntrys.UpdatedDate = DateTime.ParseExact(txtUpdatedDate.Text, "dd/MM/yyyy", null);
+
+                ls.SubmitChanges();
+                Response.Redirect("./Default.aspx");
+            }
+        }
+-----------------------------------------Bind Control--------------------------------------------------
+ public void BindControl()
+        {
+            LinkToSQLDataContext ls = new LinkToSQLDataContext();
+            var data = from salaryRate in ls.SalaryRates
+                       orderby salaryRate.Code descending
+                       select new { salaryRate.ID , salaryRate.Code, salaryRate.Description };
+
+            ddlSalaryRate.DataTextField = "Code";
+            ddlSalaryRate.DataValueField = "ID";
+            ddlSalaryRate.DataSource = data;
+            ddlSalaryRate.DataBind();
+            ddlSalaryRate.Items.Insert(0, "-Select One-");
+        }
+---------------------State Management----------------------------------------
+
+
+ public string UserID
+        {
+            get {
+                object obj = ViewState["UserID"];
+                return obj == null ? string.Empty : obj.ToString();
+            }
+            set {
+                ViewState["UserID"] = value;
+            }
+        }
+
+      Default            Response.Redirect("./Detail.aspx?ID=" + s + "&name=" + "");
+      Detail		public string ID
+        		{
+            			get
+            			{
+                			return Request.QueryString["ID"];
+          			  }
+           			 set
+            			{
+               			 ID = value;
+          			  }
+        		}
+
